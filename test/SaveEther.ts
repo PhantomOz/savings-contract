@@ -23,6 +23,7 @@ describe("SaveEther", function () {
         const {saveEther, owner} = await loadFixture(deploySaveEther);
         await saveEther.deposit({value: 1});
         await expect( await saveEther.checkSavings(owner)).to.be.equal(1);
+        await expect(await saveEther.checkContractBal()).to.be.equals(1);
     });
     it("Should Emit SavingSuccessful event after deposit", async function(){
         const {saveEther, owner} = await loadFixture(deploySaveEther);
@@ -38,6 +39,24 @@ describe("SaveEther", function () {
         const {saveEther, owner} = await loadFixture(deploySaveEther);
         await saveEther.deposit({value: 50});
         await expect( await saveEther.withdraw()).to.changeEtherBalance(owner, +50);
+        await expect(await saveEther.checkContractBal()).to.be.equals(0);
+    });
+  });
+  describe("SendOutSaving", function () {
+    it("Should throw an error if amount is not greater than zero", async function(){
+        const {saveEther,otherAccount} = await loadFixture(deploySaveEther);
+        await expect(saveEther.sendOutSaving(otherAccount, 0)).to.be.revertedWith(`can't send zero value`);
+    });
+    it("Should throw an error if amount is greater than balance", async function(){
+        const {saveEther, otherAccount} = await loadFixture(deploySaveEther);
+        await saveEther.deposit({value: 50});
+        await expect(saveEther.sendOutSaving(otherAccount, 51)).to.be.reverted;
+    });
+    it("Should should successfully credit the receiver", async function(){
+        const {saveEther, otherAccount} = await loadFixture(deploySaveEther);
+        await saveEther.deposit({value: 50});
+        await expect( await saveEther.sendOutSaving(otherAccount, 50)).to.changeEtherBalance(otherAccount, +50);
+        await expect(await saveEther.checkContractBal()).to.be.equals(0);
     });
   });
 });
