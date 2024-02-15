@@ -29,4 +29,15 @@ describe("SaveEther", function () {
         await expect(await saveEther.deposit({value: 1})).to.emit(saveEther, "SavingSuccessful").withArgs(owner, 1);
     });
   });
+  describe("Withdraw", function () {
+    it("Should throw an error if user does not have savings", async function(){
+        const {saveEther} = await loadFixture(deploySaveEther);
+        await expect(saveEther.withdraw()).to.be.revertedWith(`you don't have any savings`);
+    });
+    it("Should succesfully Withdraw", async function(){
+        const {saveEther, owner} = await loadFixture(deploySaveEther);
+        await saveEther.deposit({value: 50});
+        await expect( await saveEther.withdraw()).to.changeEtherBalance(owner, +50);
+    });
+  });
 });
